@@ -3,10 +3,7 @@
 import asyncpg
 
 class DBRepository:
-    def __init__(self):
-        self.pool: asyncpg.Pool
-
-    def set_pool(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool):
         self.pool = pool
 
     async def increment(self, video_id: int, view_count: int) -> int:

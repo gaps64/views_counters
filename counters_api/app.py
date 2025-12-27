@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from redis.asyncio import Redis
 
+from counters_api.api import api as api_module
+
 from counters_api.api.api import router
 from counters_api.container import Container
 from counters_api.settings import settings
@@ -12,10 +14,11 @@ async def lifespan(app: FastAPI):
     
     pg_pool = await asyncpg.create_pool(
         # dsn postgres://user:pass@host:port/database?option=value.
-        dsn=f'postgres://{settings.db_user}:{settings.db_password}@'
-            f'{settings.db_host}:{settings.db_port}/{settings.db_name}',
-        min_size=settings.dd_pool_min_size,
-        max_size=20,
+        dsn=f'postgres://{settings.postgres_user}:{settings.postgres_password}@'
+            f'{settings.postgres_host}:{settings.postgres_port}/'
+            f'{settings.postgres_db}',
+        min_size=settings.postgres_pool_min_size,
+        max_size=settings.postgres_pool_max_size
     )
 
     redis = Redis.from_url(
@@ -28,6 +31,9 @@ async def lifespan(app: FastAPI):
         pg_pool=pg_pool,
         redis=redis,
     )
+    container.wire(
+        modules=[api_module]
+    )
     # app.state.container = container
     app.container = container
 
@@ -38,7 +44,8 @@ async def lifespan(app: FastAPI):
   
 
 app = FastAPI(title="View Counter",
-              lifespan=lifespan)
+              lifespan=lifespan,
+              version='1.0.0')
 
 app.include_router(router)
 

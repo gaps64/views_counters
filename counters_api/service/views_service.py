@@ -14,11 +14,11 @@ class ViewsService:
         self.redis_repository = redis_repository
     
     async def add_view(self, video_id: int):
-        await self.redis_repository.increment(
+        return await self.redis_repository.increment(
             video_id=video_id
         )
 
     async def get_views(self, video_id: int): 
-        await self.redis_repository.get_views(
+        return await self.redis_repository.get_views(
             video_id=video_id
         )

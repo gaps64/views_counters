@@ -11,8 +11,9 @@ router = APIRouter(
     prefix='/videos'
 )
 
-@inject
+
 @router.post("/{video_id}/view")
+@inject
 async def add_view(
     video_id: int, 
     service: "ViewsService" = Depends(Provide(Container.views_service))
@@ -20,8 +21,9 @@ async def add_view(
     return await service.add_view(video_id)
 
 
-@inject
+
 @router.get("/{video_id}/views")
+@inject
 async def get_views(
     video_id: int, 
     service: "ViewsService" = Depends(Provide(Container.views_service))
