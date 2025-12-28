@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     postgres_pool_max_size: int = 20
     redis_host: str = 'localhost'
     redis_port: int = 6379
+    sync_batch_size: int = 1000
+    sync_max_retry: int = 10
+    sync_interval: int = 5
 
 
 settings = Settings(

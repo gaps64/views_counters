@@ -1,16 +1,15 @@
+import asyncio
+from typing import TYPE_CHECKING
 
 import asyncpg
-from fastapi import FastAPI
 from redis.asyncio import Redis
 
-from counters_api.api import api as api_module
-
-from counters_api.api.api import router
-from counters_api.container import Container
 from counters_api.settings import settings
+from sync_worker.container import Container
 
-async def lifespan(app: FastAPI):
-    
+
+async def main():
+    # Подключение к Redis
     pg_pool = await asyncpg.create_pool(
         # dsn postgres://user:pass@host:port/database?option=value.
         dsn=f'postgres://{settings.postgres_user}:{settings.postgres_password}@'
@@ -30,26 +29,20 @@ async def lifespan(app: FastAPI):
         pg_pool=pg_pool,
         redis=redis,
     )
-    container.wire(
-        modules=[api_module]
-    )
-    # app.state.container = container
-    app.container = container
 
-    yield
- 
-    await redis.aclose()
-    await pg_pool.close()
-  
+    worker = container.sync_worker()
 
-app = FastAPI(title="View Counter",
-              lifespan=lifespan,
-              version='1.0.0')
-
-app.include_router(router)
+    try:
+        while True:
+            await worker.run_redis_db_sync(
+                batch_size=settings.sync_batch_size,
+                max_retry=settings.sync_max_retry
+            )
+            await asyncio.sleep(settings.sync_interval)
+    finally:
+        await redis.aclose()
+        await pg_pool.close()
 
 
-
-
-
-
+if __name__ == "__main__":
+    asyncio.run(main())
